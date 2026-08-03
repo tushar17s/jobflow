@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="popup.css">
+    <title>JobFlow</title>
+</head>
+
+<body>
+
+<div class="card">
+
+    <div class="logo">
+        ⚡
+    </div>
+
+    <h1>JobFlow</h1>
+
+    <p class="tagline">
+        Capture jobs with one click.
+    </p>
+    <select id="extractor">
+
+    <option value="naukri">Naukri</option>
+
+    <option value="indeed">Indeed</option>
+
+    <option value="generic">Generic</option>
+
+    </select>
+    <button id="saveJob">
+        Save Current Job
+    </button>
+
+    <div id="status" class="status">
+
+        Ready
+
+    </div>
+
+</div>
+
+<script type="module" src="popup.js"></script>
+
+</body>
+</html>
