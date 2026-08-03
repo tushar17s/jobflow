@@ -20,33 +20,32 @@ export function extractIndeed() {
 
     };
 
-    let role = getText(
+    const role = getText(
         '[data-testid="jobsearch-JobInfoHeader-title"]'
-    );
+    ).replace(/\s*-\s*job post/i, "").trim();
 
-    role = role.replace(/\s*-\s*job post/i, "").trim();
+    // Try multiple selectors for company
+    const company =
+        getText('[data-testid="inlineHeader-companyName"]') ||
+        getText("#companyLink") ||
+        getText(".css-1h4l2d7");
 
-    const company = getText(".css-1h4l2d7");
-
-    const location = getText(
-        '[data-testid="inlineHeader-companyLocation"]'
-    );
+    // Try multiple selectors for location
+    const location =
+        getText('[data-testid="inlineHeader-companyLocation"]') ||
+        getText("#jobLocationText") ||
+        getText("#location-collapsed-header");
 
     const requirements = extractDescription();
 
     console.log("===== Indeed Debug =====");
+
     console.log({
         role,
         company,
         location,
         requirements
     });
-
-    if (!role || !company) {
-
-        return null;
-
-    }
 
     return {
 

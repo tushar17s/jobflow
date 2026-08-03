@@ -227,7 +227,16 @@ Dashboard displays job
 
 ---
 
+# 📷 Screenshots
 
+
+![alt text](<Screenshot (277).png>)
+
+![alt text](<Screenshot (278).png>)
+
+![alt text](<Screenshot (279).png>)
+
+![alt text](<Screenshot (280).png>)
 
 # Supported Platforms
 
