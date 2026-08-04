@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.schema import Create , StatusUpdate
 from fastapi import Query
 from sqlalchemy import or_
-
+import math
 
 app = FastAPI()
 
@@ -145,7 +145,7 @@ def all_jobs(db = Depends(db_session),
         query = query.order_by(
         db_models.JobCreate.applied_at.desc()
         )
-
+    total_jobs = query.count()
 
        # Apply pagination
     jobs = (query
@@ -153,7 +153,54 @@ def all_jobs(db = Depends(db_session),
             .limit(page_size)
             .all()
             )
-    return jobs
+    
+    saved = db.query(db_models.JobCreate).filter(
+    db_models.JobCreate.status == "Saved"
+    ).count()
+
+    applied = db.query(db_models.JobCreate).filter(
+        db_models.JobCreate.status == "Applied"
+    ).count()
+
+    interview = db.query(db_models.JobCreate).filter(
+        db_models.JobCreate.status == "Interview"
+    ).count()
+
+    rejected = db.query(db_models.JobCreate).filter(
+        db_models.JobCreate.status == "Rejected"
+    ).count()
+
+    offer = db.query(db_models.JobCreate).filter(
+        db_models.JobCreate.status == "Offer"
+    ).count()
+    
+    return {
+
+    "jobs": jobs,
+
+    "total": total_jobs,
+
+    "page": page,
+
+    "page_size": page_size,
+
+    "total_pages": math.ceil(total_jobs / page_size),
+
+    "stats": {
+
+        "saved": saved,
+
+        "applied": applied,
+
+        "interview": interview,
+
+        "rejected": rejected,
+
+        "offer": offer
+
+    }
+
+    }
 
 # the updat endpoint : updates the status
 

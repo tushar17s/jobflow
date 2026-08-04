@@ -6,13 +6,25 @@ import {
 } from "./extractors/extractor.js";
 
 
-const saveBtn = document.getElementById("saveJob");
+const saveBtn = document.getElementById("saveBtn");
+
+const applyBtn = document.getElementById("applyBtn");
 const extractorSelect = document.getElementById("extractor");
 const status = document.getElementById("status");
 
-saveBtn.addEventListener("click", saveCurrentJob);
+saveBtn.addEventListener("click", () => {
 
-async function saveCurrentJob() {
+    saveCurrentJob("Saved");
+
+});
+
+applyBtn.addEventListener("click", () => {
+
+    saveCurrentJob("Applied");
+
+});
+
+async function saveCurrentJob(status) {
 
     try {
 
@@ -57,7 +69,7 @@ async function saveCurrentJob() {
 console.log(result);
 
 const job = result[0].result;
-
+job.status = status;
 console.log(job);
 
         if (!job) {
@@ -71,7 +83,17 @@ console.log(job);
 
         }
 
-        saveBtn.textContent = "Saving...";
+        const clickedButton =
+
+    status === "Saved"
+
+    ? saveBtn
+
+    : applyBtn;
+
+clickedButton.disabled = true;
+
+clickedButton.textContent = "Saving...";
 
         const response = await fetch(
             "http://127.0.0.1:8000/jobs",
@@ -123,7 +145,10 @@ console.log(job);
     finally {
 
         saveBtn.disabled = false;
-        saveBtn.textContent = "Save Current Job";
+applyBtn.disabled = false;
+
+saveBtn.textContent = "💾 Save";
+applyBtn.textContent = "✅ Apply";
 
     }
 

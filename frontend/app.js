@@ -10,7 +10,10 @@ const sortSelect = document.getElementById("sort");
 const refreshBtn = document.getElementById("refresh");
 const clearBtn = document.getElementById("clear");
 
-let allJobs = [];
+let currentPage = 1;
+
+let totalPages = 1;
+
 
 // =========================
 // EVENTS
@@ -18,9 +21,33 @@ let allJobs = [];
 
 window.onload = loadJobs;
 
-searchInput.oninput = updateView;
+searchInput.oninput = () => {
 
-sortSelect.onchange = updateView;
+    currentPage = 1;
+
+    loadJobs();
+
+};
+
+sortSelect.onchange = () => {
+
+    currentPage = 1;
+
+    loadJobs();
+
+};
+
+clearBtn.onclick = () => {
+
+    searchInput.value = "";
+
+    sortSelect.value = "newest";
+
+    currentPage = 1;
+
+    loadJobs();
+
+};
 
 refreshBtn.onclick = loadJobs;
 
@@ -30,7 +57,7 @@ clearBtn.onclick = () => {
 
     sortSelect.value = "newest";
 
-    updateView();
+    loadJobs();
 
 };
 
@@ -39,18 +66,30 @@ clearBtn.onclick = () => {
 // =========================
 
 async function loadJobs(){
-
+    
     refreshBtn.disabled = true;
 
     refreshBtn.textContent = "Refreshing...";
 
     try{
 
-        const res = await fetch(`${API}/all`);
+        const search = searchInput.value.trim();
 
-        allJobs = await res.json();
+        const sort = sortSelect.value;
 
-        updateView();
+        const res = await fetch(
+
+        `${API}/all?page=${currentPage}&page_size=10&search=${encodeURIComponent(search)}&sort=${sort}`
+
+        );
+
+        const data = await res.json();
+
+        totalPages = data.total_pages;
+
+        renderJobs(data.jobs);
+
+        updateStats(data);
 
     }
 
@@ -70,59 +109,18 @@ async function loadJobs(){
 
 }
 
-// =========================
-// SEARCH + SORT
-// =========================
 
-function updateView() {
-
-    let jobs = [...allJobs];
-
-    const query = searchInput.value.trim().toLowerCase();
-
-    if (query) {
-
-        jobs = jobs.filter(job =>
-
-            Object.values(job)
-                .join(" ")
-                .toLowerCase()
-                .includes(query)
-
-        );
-
-    }
-
-    const sortBy = {
-
-        newest: (a, b) =>
-            new Date(b.applied_at) - new Date(a.applied_at),
-
-        oldest: (a, b) =>
-            new Date(a.applied_at) - new Date(b.applied_at),
-
-        company: (a, b) =>
-            a.company.localeCompare(b.company),
-
-        role: (a, b) =>
-            a.role.localeCompare(b.role),
-
-        status: (a, b) =>
-            a.status.localeCompare(b.status)
-
-    };
-
-    jobs.sort(sortBy[sortSelect.value]);
-
-    renderJobs(jobs);
-
-}
 
 // =========================
 // RENDER JOBS
 // =========================
+function renderJobs(
 
-function renderJobs(jobs) {
+    jobs,
+
+    totalJobs
+
+){
 
     if (!jobs.length) {
 
@@ -137,7 +135,7 @@ function renderJobs(jobs) {
         return;
     }
 
-    updateStats(jobs);
+    
 
     jobsContainer.innerHTML = jobs.map(job => `
 
@@ -239,6 +237,8 @@ function renderJobs(jobs) {
     </div>
 
     `).join("");
+
+    renderPagination();
                 // =========================
 // EVENTS INSIDE JOB LIST
 // =========================
@@ -271,6 +271,26 @@ jobsContainer.addEventListener("click", async e => {
 
     }
 
+    const prev = e.target.closest("#prevPage");
+
+if(prev){
+
+    currentPage--;
+
+    loadJobs();
+
+}
+
+const next = e.target.closest("#nextPage");
+
+if(next){
+
+    currentPage++;
+
+    loadJobs();
+
+}
+
 });
 
 jobsContainer.addEventListener("change", e => {
@@ -294,7 +314,7 @@ jobsContainer.addEventListener("change", e => {
 
 
 async function deleteJob(id){
-
+await loadJobs();
     try{
 
         await fetch(
@@ -309,11 +329,7 @@ async function deleteJob(id){
 
         );
 
-        allJobs = allJobs.filter(
-
-            j=>j.id!=id
-
-        );
+        allJobs = allJobs.filter(j => j.id != id);
 
         updateView();
 
@@ -330,7 +346,7 @@ async function deleteJob(id){
 }
 
 async function updateStatus(id,status){
-
+await loadJobs();
     try{
 
         await fetch(
@@ -357,13 +373,9 @@ async function updateStatus(id,status){
 
         );
 
-        allJobs.find(
+        await loadJobs();
 
-            j=>j.id==id
-
-        ).status=status;
-
-        updateStats(allJobs);
+toast("Status updated");
 
         toast("Status updated");
 
@@ -377,28 +389,23 @@ async function updateStatus(id,status){
 
 }
 
-function updateStats(jobs){
+function updateStats(data){
 
-    const count=status=>
+    
 
-        jobs.filter(
+    totalJobs.textContent = data.total;
 
-            j=>j.status===status
+    savedJobs.textContent = data.stats.saved;
 
-        ).length;
+    appliedJobs.textContent = data.stats.applied;
 
-    totalJobs.textContent=jobs.length;
+    interviewJobs.textContent = data.stats.interview;
 
-    savedJobs.textContent=count("Saved");
+    rejectedJobs.textContent = data.stats.rejected;
 
-    appliedJobs.textContent=count("Applied");
 
-    interviewJobs.textContent=count("Interview");
-
-    rejectedJobs.textContent=count("Rejected");
 
 }
-
 function toast(msg){
 
     const div=document.createElement("div");
@@ -427,3 +434,51 @@ function toast(msg){
 
 }
 
+
+function renderPagination(){
+
+    if(totalPages<=1)return;
+
+    jobsContainer.innerHTML += `
+
+<div class="pagination">
+
+<button
+
+id="prevPage"
+
+${currentPage===1?"disabled":""}
+
+>
+
+← Previous
+
+</button>
+
+<span>
+
+Page ${currentPage}
+
+of
+
+${totalPages}
+
+</span>
+
+<button
+
+id="nextPage"
+
+${currentPage===totalPages?"disabled":""}
+
+>
+
+Next →
+
+</button>
+
+</div>
+
+`;
+
+}
